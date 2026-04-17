@@ -11,6 +11,12 @@ class Status(enum.Enum):
     EMPTY = 3
     OUT = 4
 
+DIRECTIONS = (
+    (0, -1), # down
+    (0, 1),  # up
+    (-1, 0), # left
+    (1, 0)   # right
+)
 
 class Goban:
     def __init__(self, goban: list[str]) -> None:
@@ -44,4 +50,25 @@ class Goban:
         raise ValueError(f"Unknown goban value {self.goban[y][x]}")
 
     def is_taken(self, x: int, y: int) -> bool:
-        raise NotImplementedError
+        stone_status = self.get_status(x, y)
+        if stone_status not in (Status.WHITE, Status.BLACK):
+            return False # No stone here
+
+        seen: set[tuple[int, int]] = {(x, y)}
+        remaining = [(x, y)] 
+
+        while remaining:
+            ix, iy = remaining.pop()
+
+            for dx, dy in DIRECTIONS:
+                neighbour = (ix + dx, iy + dy)
+                neighbour_status = self.get_status(*neighbour)
+
+                if neighbour_status == Status.EMPTY:
+                    return False # liberty found -> not taken 
+                
+                if neighbour_status == stone_status and neighbour not in seen:
+                    seen.add(neighbour)
+                    remaining.append(neighbour)
+            
+        return True # no liberties -> taken
